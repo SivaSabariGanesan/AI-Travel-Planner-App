@@ -3,6 +3,12 @@ import swaggerUi from "swagger-ui-express";
 import type { Express } from "express";
 
 const port = Number(process.env.PORT) || 5000;
+const isLocalAuthBypassEnabled =
+  (process.env.NODE_ENV || "development") !== "production" &&
+  (process.env.DISABLE_AUTH_FOR_LOCAL || "false").toLowerCase() === "true";
+const protectedRouteSecurity = isLocalAuthBypassEnabled
+  ? undefined
+  : [{ bearerAuth: [] }];
 
 const swaggerSpec = swaggerJsdoc({
   definition: {
@@ -168,7 +174,7 @@ const swaggerSpec = swaggerJsdoc({
         get: {
           tags: ["Users"],
           summary: "Get current user",
-          security: [{ bearerAuth: [] }],
+          security: protectedRouteSecurity,
           responses: {
             "200": { description: "Current user" },
             "401": { description: "Unauthorized" },
@@ -179,7 +185,7 @@ const swaggerSpec = swaggerJsdoc({
         put: {
           tags: ["Users"],
           summary: "Update user preferences",
-          security: [{ bearerAuth: [] }],
+          security: protectedRouteSecurity,
           requestBody: {
             required: true,
             content: {
@@ -218,7 +224,7 @@ const swaggerSpec = swaggerJsdoc({
         get: {
           tags: ["Dashboard"],
           summary: "Get dashboard data",
-          security: [{ bearerAuth: [] }],
+          security: protectedRouteSecurity,
           responses: {
             "200": { description: "Dashboard payload" },
             "401": { description: "Unauthorized" },
@@ -229,7 +235,7 @@ const swaggerSpec = swaggerJsdoc({
         post: {
           tags: ["Itinerary"],
           summary: "Generate AI itinerary and save it",
-          security: [{ bearerAuth: [] }],
+          security: protectedRouteSecurity,
           requestBody: {
             required: true,
             content: {

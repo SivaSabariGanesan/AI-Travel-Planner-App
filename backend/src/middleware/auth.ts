@@ -4,11 +4,26 @@ import { AppError } from "../utils/appError";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+const isLocalAuthBypassEnabled = (): boolean => {
+  const env = process.env.NODE_ENV || "development";
+  const bypass = (process.env.DISABLE_AUTH_FOR_LOCAL || "false").toLowerCase();
+  return env !== "production" && bypass === "true";
+};
+
 export const requireAuth = (
   req: Request,
   _res: Response,
   next: NextFunction,
 ): void => {
+  if (isLocalAuthBypassEnabled()) {
+    req.user = {
+      userId: String(process.env.LOCAL_TEST_USER_ID || "000000000000000000000000"),
+      email: process.env.LOCAL_TEST_USER_EMAIL || "local@test.com",
+    };
+    next();
+    return;
+  }
+
   if (!JWT_SECRET) {
     next(new AppError("JWT_SECRET is not set", 500));
     return;
