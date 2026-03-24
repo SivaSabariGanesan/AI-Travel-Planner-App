@@ -211,32 +211,59 @@ class GeneratedContent {
 
 class DayWisePlan {
   final String? day;
+  final String? date;
   final String? plan;
   final List<String> activities;
   final List<String> meals;
+  final String? morning;
+  final String? afternoon;
+  final String? evening;
+  final List<String> food;
+  final String? estimatedCost;
 
   DayWisePlan({
     this.day,
+    this.date,
     this.plan,
     this.activities = const [],
     this.meals = const [],
+    this.morning,
+    this.afternoon,
+    this.evening,
+    this.food = const [],
+    this.estimatedCost,
   });
 
   factory DayWisePlan.fromJson(Map<String, dynamic> json) {
+    final foodItems = _asStringList(json['food']);
+    final mealItems = _asStringList(json['meals']);
+
     return DayWisePlan(
       day: _asNullableString(json['day']),
+      date: _asNullableString(json['date']),
       plan: _asNullableString(json['plan']),
       activities: _asStringList(json['activities']),
-      meals: _asStringList(json['meals']),
+      meals: mealItems,
+      morning: _asNullableString(json['morning']),
+      afternoon: _asNullableString(json['afternoon']),
+      evening: _asNullableString(json['evening']),
+      food: foodItems,
+      estimatedCost: _asNullableString(json['estimatedCost']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'day': day,
+      'date': date,
       'plan': plan,
       'activities': activities,
       'meals': meals,
+      'morning': morning,
+      'afternoon': afternoon,
+      'evening': evening,
+      'food': food,
+      'estimatedCost': estimatedCost,
     };
   }
 }

@@ -402,6 +402,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _buildDayCard(DayWisePlan day, int index, bool isExpanded) {
+    final hasPrimaryPlan = (day.plan?.trim().isNotEmpty ?? false);
+    final hasActivities = day.activities.isNotEmpty;
+    final hasMeals = day.meals.isNotEmpty;
+    final hasMorning = (day.morning?.trim().isNotEmpty ?? false);
+    final hasAfternoon = (day.afternoon?.trim().isNotEmpty ?? false);
+    final hasEvening = (day.evening?.trim().isNotEmpty ?? false);
+    final hasFood = day.food.isNotEmpty;
+    final hasCost = (day.estimatedCost?.trim().isNotEmpty ?? false);
+    final hasDate = (day.date?.trim().isNotEmpty ?? false);
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -441,7 +451,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (day.plan != null)
+                      if (hasDate)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            day.date!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      if (!hasDate && hasPrimaryPlan)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
@@ -470,7 +493,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (day.plan != null) ...[
+                    if (hasPrimaryPlan) ...[
                       Text(
                         'Plan',
                         style: const TextStyle(
@@ -482,7 +505,43 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       Text(day.plan!),
                       const SizedBox(height: 16),
                     ],
-                    if (day.activities.isNotEmpty) ...[
+                    if (hasMorning) ...[
+                      Text(
+                        'Morning',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(day.morning!),
+                      const SizedBox(height: 16),
+                    ],
+                    if (hasAfternoon) ...[
+                      Text(
+                        'Afternoon',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(day.afternoon!),
+                      const SizedBox(height: 16),
+                    ],
+                    if (hasEvening) ...[
+                      Text(
+                        'Evening',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(day.evening!),
+                      const SizedBox(height: 16),
+                    ],
+                    if (hasActivities) ...[
                       Text(
                         'Activities',
                         style: const TextStyle(
@@ -509,7 +568,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       }).toList(),
                       const SizedBox(height: 16),
                     ],
-                    if (day.meals.isNotEmpty) ...[
+                    if (hasMeals) ...[
                       Text(
                         'Meals',
                         style: const TextStyle(
@@ -534,6 +593,45 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                         );
                       }).toList(),
+                    ],
+                    if (hasFood) ...[
+                      if (hasMeals) const SizedBox(height: 16),
+                      Text(
+                        'Food',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...day.food.map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.restaurant_menu,
+                                size: 16,
+                                color: Colors.orange.shade400,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(item)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                    if (hasCost) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Estimated Cost',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(day.estimatedCost!),
                     ],
                   ],
                 ),
