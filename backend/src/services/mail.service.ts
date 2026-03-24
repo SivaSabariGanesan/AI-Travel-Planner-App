@@ -1,5 +1,8 @@
 import nodemailer from "nodemailer";
 import { AppError } from "../utils/appError";
+import { config } from "dotenv";
+
+config();
 
 const smtpPort = Number(process.env.SMTP_PORT || 587);
 
@@ -13,6 +16,7 @@ const hasSmtpConfig = (): boolean => {
       process.env.SMTP_FROM,
   );
 };
+
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
