@@ -14,6 +14,42 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   int _expandedDayIndex = -1;
 
+  String _buildDaySummary(DayWisePlan day) {
+    final summaryParts = <String>[];
+
+    if (day.plan?.trim().isNotEmpty ?? false) {
+      summaryParts.add(day.plan!.trim());
+    }
+
+    if (summaryParts.isEmpty && (day.morning?.trim().isNotEmpty ?? false)) {
+      summaryParts.add('Morning: ${day.morning!.trim()}');
+    }
+
+    if (summaryParts.isEmpty && (day.afternoon?.trim().isNotEmpty ?? false)) {
+      summaryParts.add('Afternoon: ${day.afternoon!.trim()}');
+    }
+
+    if (summaryParts.isEmpty && (day.evening?.trim().isNotEmpty ?? false)) {
+      summaryParts.add('Evening: ${day.evening!.trim()}');
+    }
+
+    if (summaryParts.isEmpty && day.activities.isNotEmpty) {
+      summaryParts.add(day.activities.take(2).join(', '));
+    }
+
+    if (summaryParts.isEmpty && day.meals.isNotEmpty) {
+      summaryParts.add('Meals: ${day.meals.take(2).join(', ')}');
+    }
+
+    if (summaryParts.isEmpty && day.food.isNotEmpty) {
+      summaryParts.add('Food: ${day.food.take(2).join(', ')}');
+    }
+
+    return summaryParts.isEmpty
+        ? 'No summary available for this day yet.'
+        : summaryParts.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     final recipe = widget.recipe;
@@ -402,6 +438,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _buildDayCard(DayWisePlan day, int index, bool isExpanded) {
+    final daySummary = _buildDaySummary(day);
     final hasPrimaryPlan = (day.plan?.trim().isNotEmpty ?? false);
     final hasActivities = day.activities.isNotEmpty;
     final hasMeals = day.meals.isNotEmpty;
@@ -411,6 +448,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final hasFood = day.food.isNotEmpty;
     final hasCost = (day.estimatedCost?.trim().isNotEmpty ?? false);
     final hasDate = (day.date?.trim().isNotEmpty ?? false);
+    
 
     return GestureDetector(
       onTap: () {
@@ -493,6 +531,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'Day Summary',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(daySummary),
+                    const SizedBox(height: 16),
                     if (hasPrimaryPlan) ...[
                       Text(
                         'Plan',

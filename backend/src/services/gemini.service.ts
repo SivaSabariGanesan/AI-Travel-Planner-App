@@ -83,18 +83,28 @@ Return valid JSON only with keys:
 - route: { from, to }
 - duration: { days, startDate, endDate }
 - interests (array)
-- dayWisePlan (array of { day, date, morning, afternoon, evening, food, estimatedCost })
+- dayWisePlan (array of { day, date, daySummary, morning, afternoon, evening, food, estimatedCost })
 - localFoodIdeas (array)
 - packingChecklist (array)
-- transportTips (array)
+- transportTips (string)
 - estimatedBudget
+
+Day-wise rules (IMPORTANT):
+- For each day, include a concise daySummary (4-5 lines) that captures the main plan of the day.
+- Keep morning/afternoon/evening practical and specific.
+- food should be an array of destination-relevant meal ideas.
+- estimatedCost should be per-day cost in destination currency.
 
 Budget rules (IMPORTANT):
 - Always estimate costs in the destination local currency (for "To" location).
 - Include currency code and symbol in both day-wise estimatedCost and estimatedBudget.
 - Example formats: "INR 45,000 (₹)", "JPY 120,000 (¥)", "EUR 1,250 (€)".
 - If budget input is qualitative (Budget/Moderate/Luxury), convert it to a realistic numeric range in destination currency.
-- Keep estimatedBudget concise as a readable string.`;
+- Keep estimatedBudget concise as a readable string.
+
+Output rules:
+- Return JSON only. Do not include markdown code fences or extra commentary.
+- Ensure all keys exist even if values are empty strings/arrays.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text();
