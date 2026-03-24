@@ -87,7 +87,14 @@ Return valid JSON only with keys:
 - localFoodIdeas (array)
 - packingChecklist (array)
 - transportTips (array)
-- estimatedBudget`;
+- estimatedBudget
+
+Budget rules (IMPORTANT):
+- Always estimate costs in the destination local currency (for "To" location).
+- Include currency code and symbol in both day-wise estimatedCost and estimatedBudget.
+- Example formats: "INR 45,000 (₹)", "JPY 120,000 (¥)", "EUR 1,250 (€)".
+- If budget input is qualitative (Budget/Moderate/Luxury), convert it to a realistic numeric range in destination currency.
+- Keep estimatedBudget concise as a readable string.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text();
