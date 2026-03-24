@@ -15,15 +15,6 @@ export const requireAuth = (
   _res: Response,
   next: NextFunction,
 ): void => {
-  if (isLocalAuthBypassEnabled()) {
-    req.user = {
-      userId: String(process.env.LOCAL_TEST_USER_ID || "000000000000000000000000"),
-      email: process.env.LOCAL_TEST_USER_EMAIL || "local@test.com",
-    };
-    next();
-    return;
-  }
-
   if (!JWT_SECRET) {
     next(new AppError("JWT_SECRET is not set", 500));
     return;
@@ -33,6 +24,17 @@ export const requireAuth = (
   const token = authHeader?.startsWith("Bearer ")
     ? authHeader.slice(7)
     : undefined;
+
+  // In local bypass mode, allow requests without a token.
+  // If a token is provided, always prefer validating the real token.
+  if (!token && isLocalAuthBypassEnabled()) {
+    req.user = {
+      userId: String(process.env.LOCAL_TEST_USER_ID || "000000000000000000000000"),
+      email: process.env.LOCAL_TEST_USER_EMAIL || "local@test.com",
+    };
+    next();
+    return;
+  }
 
   if (!token) {
     next(new AppError("Authorization token is required", 401));
