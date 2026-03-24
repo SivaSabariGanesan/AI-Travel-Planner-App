@@ -1,3 +1,32 @@
+String _asString(dynamic value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  return value.toString();
+}
+
+String? _asNullableString(dynamic value) {
+  if (value == null) return null;
+  final text = value.toString();
+  return text.isEmpty ? null : text;
+}
+
+int? _asNullableInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  return int.tryParse(value.toString());
+}
+
+int _asInt(dynamic value, {int fallback = 0}) {
+  return _asNullableInt(value) ?? fallback;
+}
+
+List<String> _asStringList(dynamic value) {
+  if (value is List) {
+    return value.map((e) => e.toString()).toList();
+  }
+  return <String>[];
+}
+
 class Recipe {
   final String id;
   final String userId;
@@ -23,13 +52,13 @@ class Recipe {
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
-      id: json['_id'] ?? json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      topic: json['topic'] ?? '',
-      days: json['days'],
+      id: _asString(json['_id'] ?? json['id']),
+      userId: _asString(json['userId']),
+      topic: _asString(json['topic']),
+      days: _asNullableInt(json['days']),
       itineraryInput: RecipeInput.fromJson(json['itineraryInput'] ?? {}),
       generatedContent: GeneratedContent.fromJson(json['generatedContent'] ?? {}),
-      rawText: json['rawText'] ?? '',
+      rawText: _asString(json['rawText']),
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
@@ -73,14 +102,14 @@ class RecipeInput {
 
   factory RecipeInput.fromJson(Map<String, dynamic> json) {
     return RecipeInput(
-      fromLocation: json['fromLocation'] ?? '',
-      toLocation: json['toLocation'] ?? '',
-      startDate: json['startDate'],
-      endDate: json['endDate'],
-      interests: List<String>.from(json['interests'] ?? []),
-      budget: json['budget'],
-      travelerCount: json['travelerCount'] ?? 1,
-      extraNotes: json['extraNotes'],
+      fromLocation: _asString(json['fromLocation']),
+      toLocation: _asString(json['toLocation']),
+      startDate: _asNullableString(json['startDate']),
+      endDate: _asNullableString(json['endDate']),
+      interests: _asStringList(json['interests']),
+      budget: _asNullableString(json['budget']),
+      travelerCount: _asInt(json['travelerCount'], fallback: 1),
+      extraNotes: _asNullableString(json['extraNotes']),
     );
   }
 
@@ -127,21 +156,40 @@ class GeneratedContent {
     List<DayWisePlan> dayPlans = [];
     if (json['dayWisePlan'] is List) {
       dayPlans = (json['dayWisePlan'] as List)
-          .map((e) => DayWisePlan.fromJson(e is String ? {'plan': e} : e ?? {}))
+          .map((e) => DayWisePlan.fromJson(e is Map<String, dynamic>
+              ? e
+              : e is String
+                  ? {'plan': e}
+                  : {'plan': e?.toString()}))
+          .toList();
+    } else if (json['dayWisePlan'] is Map) {
+      final map = json['dayWisePlan'] as Map;
+      dayPlans = map.entries
+          .map((entry) => DayWisePlan.fromJson(
+                entry.value is Map<String, dynamic>
+                    ? {
+                        'day': entry.key.toString(),
+                        ...entry.value as Map<String, dynamic>,
+                      }
+                    : {
+                        'day': entry.key.toString(),
+                        'plan': entry.value?.toString(),
+                      },
+              ))
           .toList();
     }
 
     return GeneratedContent(
-      title: json['title'],
-      summary: json['summary'],
-      route: json['route'],
-      duration: json['duration'],
-      interests: List<String>.from(json['interests'] ?? []),
+      title: _asNullableString(json['title']),
+      summary: _asNullableString(json['summary']),
+      route: _asNullableString(json['route']),
+      duration: _asNullableString(json['duration']),
+      interests: _asStringList(json['interests']),
       dayWisePlan: dayPlans,
-      localFoodIdeas: List<String>.from(json['localFoodIdeas'] ?? []),
-      packingChecklist: List<String>.from(json['packingChecklist'] ?? []),
-      transportTips: json['transportTips'],
-      estimatedBudget: json['estimatedBudget'],
+      localFoodIdeas: _asStringList(json['localFoodIdeas']),
+      packingChecklist: _asStringList(json['packingChecklist']),
+      transportTips: _asNullableString(json['transportTips']),
+      estimatedBudget: _asNullableString(json['estimatedBudget']),
     );
   }
 
@@ -176,10 +224,10 @@ class DayWisePlan {
 
   factory DayWisePlan.fromJson(Map<String, dynamic> json) {
     return DayWisePlan(
-      day: json['day'],
-      plan: json['plan'],
-      activities: List<String>.from(json['activities'] ?? []),
-      meals: List<String>.from(json['meals'] ?? []),
+      day: _asNullableString(json['day']),
+      plan: _asNullableString(json['plan']),
+      activities: _asStringList(json['activities']),
+      meals: _asStringList(json['meals']),
     );
   }
 
