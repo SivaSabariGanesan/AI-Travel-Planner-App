@@ -15,7 +15,7 @@ class ApiException implements Exception {
 
 class ApiClient {
   // TODO: Update with your actual backend URL
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = 'https://ai-travel-planner-app.onrender.com/api';
   String? _authToken;
 
   ApiClient({String? authToken}) : _authToken = authToken;

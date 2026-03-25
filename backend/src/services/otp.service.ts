@@ -33,12 +33,24 @@ export const issueOtp = async (
     expiresAt,
   });
 
-  await sendOtpEmail({
-    to: email,
-    otp,
-    purpose,
-    expiresInMinutes: OTP_EXPIRY_MINUTES,
-  });
+  console.info(`[OTP ISSUE] userId=${userId} purpose=${purpose} sending OTP email`);
+
+  try {
+    await sendOtpEmail({
+      to: email,
+      otp,
+      purpose,
+      expiresInMinutes: OTP_EXPIRY_MINUTES,
+    });
+
+    console.info(`[OTP ISSUE SUCCESS] userId=${userId} purpose=${purpose}`);
+  } catch (error) {
+    const failureReason = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[OTP ISSUE FAILED] userId=${userId} purpose=${purpose} reason=${failureReason}`,
+    );
+    throw error;
+  }
 };
 
 export const verifyOtp = async (

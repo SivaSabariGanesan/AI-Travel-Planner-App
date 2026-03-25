@@ -17,6 +17,20 @@ const hasSmtpConfig = (): boolean => {
   );
 };
 
+const maskEmail = (email: string): string => {
+  const [localPart, domainPart] = email.split("@");
+
+  if (!localPart || !domainPart) {
+    return "invalid-email";
+  }
+
+  if (localPart.length <= 2) {
+    return `${localPart[0] ?? "*"}*@${domainPart}`;
+  }
+
+  return `${localPart.slice(0, 2)}***@${domainPart}`;
+};
+
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -44,14 +58,22 @@ export const sendOtpEmail = async (params: {
   purpose: "signup" | "signin";
   expiresInMinutes: number;
 }): Promise<void> => {
+  const maskedEmail = maskEmail(params.to);
+
   if (!hasSmtpConfig()) {
     if (isProduction) {
+      console.error(
+        `[OTP EMAIL FAILED] Missing SMTP config for ${maskedEmail} (${params.purpose})`,
+      );
       throw new AppError(
         "SMTP config is incomplete. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.",
         500,
       );
     }
 
+    console.warn(
+      `[OTP EMAIL FALLBACK] SMTP config missing, using console OTP for ${maskedEmail} (${params.purpose})`,
+    );
     console.log(
       `[DEV OTP FALLBACK] OTP for ${params.to} (${params.purpose}): ${params.otp} (expires in ${params.expiresInMinutes} min)`,
     );
@@ -69,7 +91,15 @@ export const sendOtpEmail = async (params: {
       text: `Your OTP is ${params.otp}. It expires in ${params.expiresInMinutes} minutes. Use it to ${actionText}.`,
       html: `<p>Your OTP is <strong>${params.otp}</strong>.</p><p>It expires in ${params.expiresInMinutes} minutes.</p><p>Use it to ${actionText}.</p>`,
     });
+
+    console.info(`[OTP EMAIL SENT] to=${maskedEmail} purpose=${params.purpose}`);
   } catch (error) {
+    const failureReason = error instanceof Error ? error.message : String(error);
+
+    console.error(
+      `[OTP EMAIL FAILED] to=${maskedEmail} purpose=${params.purpose} reason=${failureReason}`,
+    );
+
     if (isProduction) {
       throw new AppError("Failed to send OTP email", 500);
     }
