@@ -48,6 +48,17 @@ export const generateTravelRecipe = async (params: {
       interests: params.interests || [],
       localFoodIdeas: [],
       packingChecklist: [],
+      travelExpense: {
+        currency: "",
+        transport: "Not specified",
+        stay: "Not specified",
+        food: "Not specified",
+        activities: "Not specified",
+        localTravel: "Not specified",
+        miscellaneous: "Not specified",
+        total: params.budget || params.preferences?.budget || "Not specified",
+        notes: "Detailed travel expense is unavailable because AI generation is not configured.",
+      },
       estimatedBudget:
         params.budget || params.preferences?.budget || "Not specified",
     };
@@ -87,6 +98,7 @@ Return valid JSON only with keys:
 - localFoodIdeas (array)
 - packingChecklist (array)
 - transportTips (string)
+- travelExpense: { currency, transport, stay, food, activities, localTravel, miscellaneous, total, notes }
 - estimatedBudget
 
 Day-wise rules (IMPORTANT):
@@ -101,6 +113,17 @@ Budget rules (IMPORTANT):
 - Example formats: "INR 45,000 (₹)", "JPY 120,000 (¥)", "EUR 1,250 (€)".
 - If budget input is qualitative (Budget/Moderate/Luxury), convert it to a realistic numeric range in destination currency.
 - Keep estimatedBudget concise as a readable string.
+
+Travel expense rules (IMPORTANT):
+- Always populate travelExpense with realistic destination-local costs.
+- travelExpense.total must match or align closely with estimatedBudget.
+- transport should cover intercity travel (flight/train/bus as applicable).
+- stay should cover accommodation for the full trip.
+- food should cover meals/snacks.
+- activities should cover tickets/experiences.
+- localTravel should cover taxis/metro/rental/local commute.
+- miscellaneous should cover permits/tips/emergency buffer.
+- notes should mention assumptions used for pricing (season, mid-range options, etc.).
 
 Output rules:
 - Return JSON only. Do not include markdown code fences or extra commentary.
@@ -130,6 +153,17 @@ Output rules:
         localFoodIdeas: [],
         packingChecklist: [],
         transportTips: [],
+        travelExpense: {
+          currency: "",
+          transport: "",
+          stay: "",
+          food: "",
+          activities: "",
+          localTravel: "",
+          miscellaneous: "",
+          total: params.budget || params.preferences?.budget || "Not specified",
+          notes: "",
+        },
         estimatedBudget:
           params.budget || params.preferences?.budget || "Not specified",
       } as Record<string, unknown>),

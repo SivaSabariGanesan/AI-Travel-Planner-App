@@ -166,6 +166,7 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  
 
                   _buildSectionTitle('Destination'),
                   TextFormField(
