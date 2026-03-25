@@ -5,6 +5,11 @@ import { config } from "dotenv";
 config();
 
 const smtpPort = Number(process.env.SMTP_PORT || 587);
+const smtpHost = process.env.SMTP_HOST;
+const smtpConnectionTimeoutMs = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 15000);
+const smtpGreetingTimeoutMs = Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10000);
+const smtpSocketTimeoutMs = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 20000);
+const otpEmailRetryCount = Number(process.env.OTP_EMAIL_RETRY_COUNT || 2);
 
 const isProduction = (process.env.NODE_ENV || "development") === "production";
 
@@ -59,14 +64,22 @@ const formatMailError = (error: unknown): string => {
 
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
+  host: smtpHost,
   port: smtpPort,
   secure: smtpPort === 465,
+  connectionTimeout: smtpConnectionTimeoutMs,
+  greetingTimeout: smtpGreetingTimeoutMs,
+  socketTimeout: smtpSocketTimeoutMs,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 const getFromEmail = (): string => {
   const fromEmail = process.env.SMTP_FROM;
@@ -109,30 +122,48 @@ export const sendOtpEmail = async (params: {
   const actionText =
     params.purpose === "signup" ? "complete your signup" : "sign in to your account";
 
-  try {
-    await transporter.sendMail({
-      from: getFromEmail(),
-      to: params.to,
-      subject: "Your AI Travel Planner OTP Code",
-      text: `Your OTP is ${params.otp}. It expires in ${params.expiresInMinutes} minutes. Use it to ${actionText}.`,
-      html: `<p>Your OTP is <strong>${params.otp}</strong>.</p><p>It expires in ${params.expiresInMinutes} minutes.</p><p>Use it to ${actionText}.</p>`,
-    });
+  const maxAttempts = Math.max(1, otpEmailRetryCount + 1);
 
-    console.info(`[OTP EMAIL SENT] to=${maskedEmail} purpose=${params.purpose}`);
-  } catch (error) {
-    const failureReason = formatMailError(error);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await transporter.sendMail({
+        from: getFromEmail(),
+        to: params.to,
+        subject: "Your AI Travel Planner OTP Code",
+        text: `Your OTP is ${params.otp}. It expires in ${params.expiresInMinutes} minutes. Use it to ${actionText}.`,
+        html: `<p>Your OTP is <strong>${params.otp}</strong>.</p><p>It expires in ${params.expiresInMinutes} minutes.</p><p>Use it to ${actionText}.</p>`,
+      });
 
-    console.error(
-      `[OTP EMAIL FAILED] to=${maskedEmail} purpose=${params.purpose} reason=${failureReason}`,
-    );
+      console.info(
+        `[OTP EMAIL SENT] to=${maskedEmail} purpose=${params.purpose} attempt=${attempt}/${maxAttempts}`,
+      );
+      return;
+    } catch (error) {
+      const failureReason = formatMailError(error);
+      const isLastAttempt = attempt >= maxAttempts;
 
-    if (isProduction) {
-      throw new AppError("Failed to send OTP email", 500);
+      console.error(
+        `[OTP EMAIL ATTEMPT FAILED] to=${maskedEmail} purpose=${params.purpose} attempt=${attempt}/${maxAttempts} host=${smtpHost || "undefined"} port=${smtpPort} timeouts(connection=${smtpConnectionTimeoutMs},greeting=${smtpGreetingTimeoutMs},socket=${smtpSocketTimeoutMs}) reason=${failureReason}`,
+      );
+
+      if (!isLastAttempt) {
+        await sleep(500 * attempt);
+        continue;
+      }
+
+      console.error(
+        `[OTP EMAIL FAILED] to=${maskedEmail} purpose=${params.purpose} reason=${failureReason}`,
+      );
+
+      if (isProduction) {
+        throw new AppError("Failed to send OTP email", 500);
+      }
+
+      console.warn("SMTP send failed in non-production. Falling back to console OTP.", error);
+      console.log(
+        `[DEV OTP FALLBACK] OTP for ${params.to} (${params.purpose}): ${params.otp} (expires in ${params.expiresInMinutes} min)`,
+      );
+      return;
     }
-
-    console.warn("SMTP send failed in non-production. Falling back to console OTP.", error);
-    console.log(
-      `[DEV OTP FALLBACK] OTP for ${params.to} (${params.purpose}): ${params.otp} (expires in ${params.expiresInMinutes} min)`,
-    );
   }
 };
