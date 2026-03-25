@@ -15,7 +15,7 @@ class ApiException implements Exception {
 
 class ApiClient {
   // TODO: Update with your actual backend URL
-  static const String baseUrl = 'https://ai-travel-planner-app.onrender.com/api';
+  static const String baseUrl = 'http://localhost:5000/api';
   String? _authToken;
 
   ApiClient({String? authToken}) : _authToken = authToken;
@@ -250,6 +250,35 @@ class ApiClient {
           statusCode: response.statusCode,
         );
       }
+    } catch (e) {
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  Future<void> deleteRecipe(String recipeId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/recipes/$recipeId'),
+        headers: _getHeaders(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw ApiException('Unauthorized', statusCode: 401);
+      } else if (response.statusCode == 404) {
+        throw ApiException('Itinerary not found', statusCode: 404);
+      } else {
+        final body = response.body.isNotEmpty
+            ? jsonDecode(response.body)
+            : <String, dynamic>{};
+        throw ApiException(
+          body['message'] ?? 'Failed to delete itinerary',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
     } catch (e) {
       throw ApiException('Network error: $e');
     }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/recipe_model.dart';
+import '../providers/recipe_provider.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -13,6 +15,56 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   int _expandedDayIndex = -1;
+
+  Future<void> _deleteCurrentRecipe() async {
+    final shouldDelete = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete itinerary?'),
+            content: const Text('This itinerary will be removed permanently.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!shouldDelete) return;
+
+    final deleted = await context
+        .read<RecipeProvider>()
+        .deleteRecipe(widget.recipe.id);
+
+    if (!mounted) return;
+
+    if (deleted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Itinerary deleted'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.read<RecipeProvider>().error ?? 'Failed to delete itinerary',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
 
   String _buildDaySummary(DayWisePlan day) {
     final summaryParts = <String>[];
@@ -63,6 +115,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             expandedHeight: 200,
             pinned: true,
             elevation: 0,
+            actions: [
+              IconButton(
+                onPressed: _deleteCurrentRecipe,
+                icon: const Icon(Icons.delete_outline),
+                tooltip: 'Delete itinerary',
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(

@@ -215,7 +215,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         horizontal: 16,
                         vertical: 8,
                       ),
-                      child: RecipeCard(recipe: recipe),
+                      child: RecipeCard(
+                        recipe: recipe,
+                        onDelete: () async {
+                          final deleted = await context
+                              .read<RecipeProvider>()
+                              .deleteRecipe(recipe.id);
+
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                deleted
+                                    ? 'Itinerary deleted'
+                                    : (context
+                                            .read<RecipeProvider>()
+                                            .error ??
+                                        'Failed to delete itinerary'),
+                              ),
+                              backgroundColor:
+                                  deleted ? Colors.green : Colors.red,
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                   childCount: recipeProvider.recipes.length,
@@ -234,8 +258,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 class RecipeCard extends StatelessWidget {
   final dynamic recipe; // Use dynamic to avoid import issues
+  final Future<void> Function()? onDelete;
 
-  const RecipeCard({Key? key, required this.recipe}) : super(key: key);
+  const RecipeCard({
+    Key? key,
+    required this.recipe,
+    this.onDelete,
+  }) : super(key: key);
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final shouldDelete = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete itinerary?'),
+            content: const Text(
+              'This itinerary will be removed permanently.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldDelete && onDelete != null) {
+      await onDelete!();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -295,10 +352,21 @@ class RecipeCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey[400],
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => _confirmDelete(context),
+                      icon: const Icon(Icons.delete_outline),
+                      color: Colors.red,
+                      tooltip: 'Delete itinerary',
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ],
                 ),
               ],
             ),

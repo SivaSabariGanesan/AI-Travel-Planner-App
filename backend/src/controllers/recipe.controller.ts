@@ -5,6 +5,18 @@ import { generateTravelRecipe } from "../services/gemini.service";
 import { AppError } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 
+export const getRecipes = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new AppError("Unauthorized", 401);
+  }
+
+  const recipes = await Recipe.find({ userId }).sort({ createdAt: -1 });
+
+  res.status(200).json({ recipes });
+});
+
 export const generateRecipe = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
@@ -89,4 +101,25 @@ export const generateRecipe = asyncHandler(async (req: Request, res: Response) =
     message: "Itinerary generated and saved successfully",
     recipe: savedRecipe,
   });
+});
+
+export const deleteRecipe = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { recipeId } = req.params;
+
+  if (!userId) {
+    throw new AppError("Unauthorized", 401);
+  }
+
+  if (!recipeId) {
+    throw new AppError("Recipe id is required", 400);
+  }
+
+  const deleted = await Recipe.findOneAndDelete({ _id: recipeId, userId });
+
+  if (!deleted) {
+    throw new AppError("Itinerary not found", 404);
+  }
+
+  res.status(200).json({ message: "Itinerary deleted successfully" });
 });

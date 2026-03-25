@@ -94,4 +94,26 @@ class RecipeProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  // Delete recipe by id
+  Future<bool> deleteRecipe(String recipeId) async {
+    _error = null;
+    notifyListeners();
+
+    try {
+      await apiClient.deleteRecipe(recipeId);
+      _recipes.removeWhere((recipe) => recipe.id == recipeId);
+
+      if (_currentRecipe?.id == recipeId) {
+        _currentRecipe = null;
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
 }
