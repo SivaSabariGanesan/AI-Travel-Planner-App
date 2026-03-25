@@ -18,24 +18,24 @@ export const issueOtp = async (
   purpose: OtpPurpose,
   email: string,
 ): Promise<void> => {
-  const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-
-  await Otp.updateMany(
-    { userId, purpose, consumedAt: null },
-    { $set: { consumedAt: new Date() } },
-  );
-
-  await Otp.create({
-    userId,
-    purpose,
-    otpHash: hashOtp(otp),
-    expiresAt,
-  });
-
-  console.info(`[OTP ISSUE] userId=${userId} purpose=${purpose} sending OTP email`);
-
   try {
+    const otp = generateOtp();
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    await Otp.updateMany(
+      { userId, purpose, consumedAt: null },
+      { $set: { consumedAt: new Date() } },
+    );
+
+    await Otp.create({
+      userId,
+      purpose,
+      otpHash: hashOtp(otp),
+      expiresAt,
+    });
+
+    console.info(`[OTP ISSUE] userId=${userId} purpose=${purpose} sending OTP email`);
+
     await sendOtpEmail({
       to: email,
       otp,

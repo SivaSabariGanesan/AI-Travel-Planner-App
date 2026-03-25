@@ -31,6 +31,32 @@ const maskEmail = (email: string): string => {
   return `${localPart.slice(0, 2)}***@${domainPart}`;
 };
 
+const formatMailError = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+
+  const nodemailerError = error as Error & {
+    code?: string;
+    responseCode?: number;
+    response?: string;
+    command?: string;
+  };
+
+  const parts = [
+    `message=${nodemailerError.message}`,
+    nodemailerError.code ? `code=${nodemailerError.code}` : null,
+    nodemailerError.responseCode ? `responseCode=${nodemailerError.responseCode}` : null,
+    nodemailerError.command ? `command=${nodemailerError.command}` : null,
+  ].filter(Boolean);
+
+  if (nodemailerError.response) {
+    parts.push(`response=${nodemailerError.response}`);
+  }
+
+  return parts.join(" | ");
+};
+
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -94,7 +120,7 @@ export const sendOtpEmail = async (params: {
 
     console.info(`[OTP EMAIL SENT] to=${maskedEmail} purpose=${params.purpose}`);
   } catch (error) {
-    const failureReason = error instanceof Error ? error.message : String(error);
+    const failureReason = formatMailError(error);
 
     console.error(
       `[OTP EMAIL FAILED] to=${maskedEmail} purpose=${params.purpose} reason=${failureReason}`,

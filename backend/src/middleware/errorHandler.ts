@@ -11,11 +11,16 @@ export const notFoundHandler = (
 
 export const errorHandler = (
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void => {
   const statusCode = err instanceof AppError ? err.statusCode : 500;
+
+  console.error(
+    `[API ERROR] ${req.method} ${req.originalUrl} status=${statusCode} message=${err.message}`,
+    err,
+  );
 
   res.status(statusCode).json({
     message: err.message || "Internal server error",
