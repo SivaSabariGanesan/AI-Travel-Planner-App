@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { Recipe } from "../models/Recipe";
 import { User } from "../models/User";
-import { generateTravelRecipe } from "../services/gemini.service";
+import { geminiService, generateTravelRecipe } from "../services/gemini.service";
+import { decryptText } from "../utils/encryption";
 import { AppError } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 
@@ -59,11 +60,22 @@ export const generateRecipe = asyncHandler(async (req: Request, res: Response) =
   const normalizedTopic =
     topic || `${fromLocation} to ${toLocation} itinerary`;
 
-  const user = await User.findById(userId).select("preferences");
+  const user = await User.findById(userId).select(
+    "preferences aiMode encryptedGeminiKey usageCount",
+  );
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
+
+  const apiKey =
+    user.aiMode === "byok"
+      ? user.encryptedGeminiKey
+        ? decryptText(user.encryptedGeminiKey)
+        : (() => {
+            throw new AppError("No personal Gemini API key configured", 400);
+          })()
+      : geminiService.getCompanyApiKey();
 
   const generated = await generateTravelRecipe({
     topic: normalizedTopic,
@@ -77,6 +89,7 @@ export const generateRecipe = asyncHandler(async (req: Request, res: Response) =
     travelerCount,
     extraNotes,
     preferences: user.preferences,
+    apiKey,
   });
 
   const savedRecipe = await Recipe.create({
@@ -95,6 +108,11 @@ export const generateRecipe = asyncHandler(async (req: Request, res: Response) =
     },
     generatedContent: generated.generatedContent,
     rawText: generated.rawText,
+  });
+
+  await User.findByIdAndUpdate(userId, {
+    $inc: { usageCount: 1 },
+    $set: { lastUsedAt: new Date() },
   });
 
   res.status(201).json({

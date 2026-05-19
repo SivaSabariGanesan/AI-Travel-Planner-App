@@ -14,8 +14,8 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  // TODO: Update with your actual backend URL
-  static const String baseUrl = 'http://localhost:5000/api';
+  // Backend base URL (set from user)
+  static const String baseUrl = 'http://172.30.0.174:5000/api';
   String? _authToken;
 
   ApiClient({String? authToken}) : _authToken = authToken;
@@ -296,6 +296,209 @@ class ApiClient {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  // ===== AI ENDPOINTS =====
+
+  Future<Map<String, dynamic>> getAiSettings() async {
+    if (_authToken == null) {
+      throw ApiException(
+        'Authentication required. Please log in first.',
+        statusCode: 401,
+      );
+    }
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/ai-settings'),
+        headers: _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw ApiException('Session expired. Please log in again.', statusCode: 401);
+      } else {
+        throw ApiException(
+          jsonDecode(response.body)['message'] ?? 'Failed to fetch AI settings',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateAiSettings({
+    required String aiMode,
+    String? geminiApiKey,
+  }) async {
+    if (_authToken == null) {
+      throw ApiException(
+        'Authentication required. Please log in first.',
+        statusCode: 401,
+      );
+    }
+    try {
+      final body = {
+        'aiMode': aiMode,
+        if (geminiApiKey != null) 'geminiApiKey': geminiApiKey,
+      };
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/ai-settings'),
+        headers: _getHeaders(),
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw ApiException('Session expired. Please log in again.', statusCode: 401);
+      } else {
+        throw ApiException(
+          jsonDecode(response.body)['message'] ?? 'Failed to update AI settings',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  Future<void> testGeminiKey(String geminiApiKey) async {
+    if (_authToken == null) {
+      throw ApiException(
+        'Authentication required. Please log in first.',
+        statusCode: 401,
+      );
+    }
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/users/ai-settings/test-key'),
+        headers: _getHeaders(),
+        body: jsonEncode({'geminiApiKey': geminiApiKey}),
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw ApiException('Session expired. Please log in again.', statusCode: 401);
+      } else {
+        throw ApiException(
+          jsonDecode(response.body)['message'] ?? 'Key validation failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> chatWithAi({
+    required String message,
+    String? conversationId,
+    int retries = 1,
+  }) async {
+    if (_authToken == null) {
+      throw ApiException(
+        'Authentication required. Please log in first.',
+        statusCode: 401,
+      );
+    }
+    try {
+      final body = {
+        'message': message,
+        if (conversationId != null) 'conversationId': conversationId,
+        'retries': retries,
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/ai/chat'),
+        headers: _getHeaders(),
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw ApiException('Session expired. Please log in again.', statusCode: 401);
+      } else {
+        throw ApiException(
+          jsonDecode(response.body)['message'] ?? 'AI chat failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  Future<List<dynamic>> getConversations() async {
+    if (_authToken == null) {
+      throw ApiException(
+        'Authentication required. Please log in first.',
+        statusCode: 401,
+      );
+    }
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/ai/conversations'),
+        headers: _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        return (jsonDecode(response.body)['data'] as List?) ?? [];
+      } else if (response.statusCode == 401) {
+        throw ApiException('Session expired. Please log in again.', statusCode: 401);
+      } else {
+        throw ApiException(
+          jsonDecode(response.body)['message'] ?? 'Failed to fetch conversations',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getConversationById(String id) async {
+    if (_authToken == null) {
+      throw ApiException(
+        'Authentication required. Please log in first.',
+        statusCode: 401,
+      );
+    }
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/ai/conversations/$id'),
+        headers: _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['data'];
+      } else if (response.statusCode == 401) {
+        throw ApiException('Session expired. Please log in again.', statusCode: 401);
+      } else {
+        throw ApiException(
+          jsonDecode(response.body)['message'] ?? 'Conversation not found',
+          statusCode: response.statusCode,
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Network error: $e');
     }
   }
 }

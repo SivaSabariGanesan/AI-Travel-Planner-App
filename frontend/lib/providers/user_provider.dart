@@ -43,6 +43,53 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  // Update AI settings (aiMode: 'app' or 'byok'), optionally provide geminiApiKey
+  Future<Map<String, dynamic>> updateAiSettings({
+    required String aiMode,
+    String? geminiApiKey,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final resp = await apiClient.updateAiSettings(
+        aiMode: aiMode,
+        geminiApiKey: geminiApiKey,
+      );
+
+      if (_user != null) {
+        _user = _user!.copyWith(aiMode: aiMode);
+      }
+
+      return resp;
+    } catch (e) {
+      _error = e.toString();
+      return {'success': false, 'message': _error};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Test a Gemini API key without saving it
+  Future<bool> testGeminiKey(String geminiApiKey) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await apiClient.testGeminiKey(geminiApiKey);
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Clear error
   void clearError() {
     _error = null;

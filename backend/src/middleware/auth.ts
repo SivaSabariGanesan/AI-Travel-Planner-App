@@ -2,8 +2,6 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "../utils/appError";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 const isLocalAuthBypassEnabled = (): boolean => {
   const env = process.env.NODE_ENV || "development";
   const bypass = (process.env.DISABLE_AUTH_FOR_LOCAL || "false").toLowerCase();
@@ -15,6 +13,9 @@ export const requireAuth = (
   _res: Response,
   next: NextFunction,
 ): void => {
+  // Read JWT_SECRET at runtime (after dotenv.config() is called)
+  const JWT_SECRET = process.env.JWT_SECRET;
+  
   if (!JWT_SECRET) {
     next(new AppError("JWT_SECRET is not set", 500));
     return;

@@ -118,6 +118,9 @@ export const verifyAuthOtp = asyncHandler(async (req: Request, res: Response) =>
       email: user.email,
       isVerified: user.isVerified,
       preferences: user.preferences,
+      aiMode: user.aiMode,
+      usageCount: user.usageCount,
+      lastUsedAt: user.lastUsedAt,
     },
   });
 });

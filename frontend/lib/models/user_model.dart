@@ -3,6 +3,9 @@ class User {
   final String name;
   final String email;
   final bool isVerified;
+  final String aiMode;
+  final int usageCount;
+  final DateTime? lastUsedAt;
   final UserPreferences preferences;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,6 +16,9 @@ class User {
     required this.name,
     required this.email,
     required this.isVerified,
+    required this.aiMode,
+    required this.usageCount,
+    this.lastUsedAt,
     required this.preferences,
     required this.createdAt,
     required this.updatedAt,
@@ -25,6 +31,9 @@ class User {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       isVerified: json['isVerified'] ?? false,
+      aiMode: json['aiMode'] ?? 'app',
+      usageCount: json['usageCount'] ?? 0,
+      lastUsedAt: json['lastUsedAt'] != null ? DateTime.parse(json['lastUsedAt']) : null,
       preferences: UserPreferences.fromJson(json['preferences'] ?? {}),
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
@@ -38,6 +47,9 @@ class User {
       'name': name,
       'email': email,
       'isVerified': isVerified,
+      'aiMode': aiMode,
+      'usageCount': usageCount,
+      'lastUsedAt': lastUsedAt?.toIso8601String(),
       'preferences': preferences.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -49,6 +61,9 @@ class User {
     String? name,
     String? email,
     bool? isVerified,
+    String? aiMode,
+    int? usageCount,
+    DateTime? lastUsedAt,
     UserPreferences? preferences,
     DateTime? lastLoginAt,
   }) {
@@ -57,6 +72,9 @@ class User {
       name: name ?? this.name,
       email: email ?? this.email,
       isVerified: isVerified ?? this.isVerified,
+      aiMode: aiMode ?? this.aiMode,
+      usageCount: usageCount ?? this.usageCount,
+      lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       preferences: preferences ?? this.preferences,
       createdAt: createdAt,
       updatedAt: DateTime.now(),

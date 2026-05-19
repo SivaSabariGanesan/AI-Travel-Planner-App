@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AppError } from "../utils/appError";
 
 type Preferences = {
   travelStyle?: string | null;
@@ -7,6 +8,13 @@ type Preferences = {
   dietaryRestrictions?: string[];
   preferredDestinations?: string[];
   tripPace?: string | null;
+};
+
+export type AiMode = "app" | "byok";
+
+export type ChatMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
 };
 
 const parseGeneratedJson = (text: string): Record<string, unknown> | null => {
@@ -33,8 +41,9 @@ export const generateTravelRecipe = async (params: {
   travelerCount?: number;
   extraNotes?: string;
   preferences?: Preferences;
+  apiKey: string;
 }): Promise<{ generatedContent: Record<string, unknown>; rawText: string }> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = params.apiKey;
 
   if (!apiKey) {
     const fallback = {
@@ -170,3 +179,102 @@ Output rules:
     rawText: text,
   };
 };
+
+const historyToPrompt = (history: ChatMessage[]): string => {
+  if (!history.length) {
+    return "";
+  }
+
+  return history
+    .slice(-12)
+    .map((message) => `${message.role.toUpperCase()}: ${message.content}`)
+    .join("\n");
+};
+
+export class GeminiService {
+  private getModel(apiKey: string, modelName?: string) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    return genAI.getGenerativeModel({
+      model: modelName || process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    });
+  }
+
+  public getCompanyApiKey(): string {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new AppError("Gemini API is not configured", 500);
+    }
+    return apiKey;
+  }
+
+  public async validateApiKey(apiKey: string): Promise<boolean> {
+    try {
+      const model = this.getModel(apiKey);
+      const response = await model.generateContent("Reply with exactly: OK");
+      return response.response.text().trim().toUpperCase().includes("OK");
+    } catch {
+      return false;
+    }
+  }
+
+  public async generateChatReply(params: {
+    apiKey: string;
+    message: string;
+    history?: ChatMessage[];
+  }): Promise<{ answer: string; estimatedTokens: number }> {
+    const model = this.getModel(params.apiKey);
+
+    const prompt = [
+      "You are a travel AI assistant. Be concise, practical, and accurate.",
+      "Respond in markdown where useful (headings, bullets, short tables).",
+      historyToPrompt(params.history || []),
+      `USER: ${params.message}`,
+      "ASSISTANT:",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const response = await model.generateContent(prompt);
+    const answer = response.response.text();
+    const estimatedTokens = Math.ceil((params.message.length + answer.length) / 4);
+
+    return { answer, estimatedTokens };
+  }
+
+  public async streamChatReply(params: {
+    apiKey: string;
+    message: string;
+    history?: ChatMessage[];
+    onChunk: (chunk: string) => void;
+  }): Promise<{ answer: string; estimatedTokens: number }> {
+    const model = this.getModel(params.apiKey);
+    const prompt = [
+      "You are a travel AI assistant. Be concise, practical, and accurate.",
+      "Respond in markdown where useful (headings, bullets, short tables).",
+      historyToPrompt(params.history || []),
+      `USER: ${params.message}`,
+      "ASSISTANT:",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const streamResult = await model.generateContentStream(prompt);
+    let fullText = "";
+
+    for await (const chunk of streamResult.stream) {
+      const text = chunk.text();
+      if (text) {
+        fullText += text;
+        params.onChunk(text);
+      }
+    }
+
+    const estimatedTokens = Math.ceil((params.message.length + fullText.length) / 4);
+    return {
+      answer: fullText,
+      estimatedTokens,
+    };
+  }
+}
+
+export const geminiService = new GeminiService();

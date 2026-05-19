@@ -3,12 +3,16 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/recipe_provider.dart';
+import '../models/recipe_model.dart';
 import 'recipe_generation_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'preferences_screen.dart';
+import 'ai_settings_screen.dart';
+import 'ai_chat_screen.dart';
+import 'usage_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -28,6 +32,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.user;
+    final recipeProvider = context.watch<RecipeProvider>();
+    final recipes = recipeProvider.recipes;
 
     return Scaffold(
       body: CustomScrollView(
@@ -80,11 +86,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         builder: (_) => const PreferencesScreen(),
                       ),
                     );
+                  } else if (value == 'ai_settings') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AiSettingsScreen(),
+                      ),
+                    );
+                  } else if (value == 'usage') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const UsageScreen(),
+                      ),
+                    );
+                  } else if (value == 'ai_chat') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AiChatScreen(),
+                      ),
+                    );
                   } else if (value == 'logout') {
                     await authProvider.logout();
                   }
                 },
                 itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem(
+                    value: 'ai_chat',
+                    child: Row(
+                      children: [
+                        Icon(Icons.chat_outlined),
+                        SizedBox(width: 8),
+                        Text('AI Chat'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'usage',
+                    child: Row(
+                      children: [
+                        Icon(Icons.show_chart_outlined),
+                        SizedBox(width: 8),
+                        Text('AI Usage'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'ai_settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.smart_toy_outlined),
+                        SizedBox(width: 8),
+                        Text('AI Settings'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
                   const PopupMenuItem(
                     value: 'preferences',
                     child: Row(
@@ -140,6 +195,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 24),
+
+                  TravelSnapshotCard(recipes: recipes),
+
                   const SizedBox(height: 32),
 
                   // Recent Itineraries Section
@@ -156,97 +215,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // Recipes List
-          Consumer<RecipeProvider>(
-            builder: (context, recipeProvider, _) {
-              if (recipeProvider.isLoading) {
-                return SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: CircularProgressIndicator(
-                        color: Colors.blue.shade400,
-                      ),
-                    ),
+          if (recipeProvider.isLoading)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: CircularProgressIndicator(
+                    color: Colors.blue.shade400,
                   ),
-                );
-              }
-
-              if (recipeProvider.recipes.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.explore_outlined,
-                            size: 80,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No itineraries yet',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Generate your first travel plan',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[400],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final recipe = recipeProvider.recipes[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: RecipeCard(
-                        recipe: recipe,
-                        onDelete: () async {
-                          final deleted = await context
-                              .read<RecipeProvider>()
-                              .deleteRecipe(recipe.id);
-
-                          if (!context.mounted) return;
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                deleted
-                                    ? 'Itinerary deleted'
-                                    : (context
-                                            .read<RecipeProvider>()
-                                            .error ??
-                                        'Failed to delete itinerary'),
-                              ),
-                              backgroundColor:
-                                  deleted ? Colors.green : Colors.red,
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                  childCount: recipeProvider.recipes.length,
                 ),
-              );
-            },
-          ),
+              ),
+            )
+          else if (recipes.isEmpty)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.explore_outlined,
+                        size: 80,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No itineraries yet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Generate your first travel plan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final recipe = recipes[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: RecipeCard(
+                      recipe: recipe,
+                      onDelete: () async {
+                        final deleted = await context
+                            .read<RecipeProvider>()
+                            .deleteRecipe(recipe.id);
+
+                        if (!context.mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              deleted
+                                  ? 'Itinerary deleted'
+                                  : (context.read<RecipeProvider>().error ??
+                                      'Failed to delete itinerary'),
+                            ),
+                            backgroundColor:
+                                deleted ? Colors.green : Colors.red,
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+                childCount: recipes.length,
+              ),
+            ),
 
           // Bottom padding
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -256,15 +306,253 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+class TravelSnapshotCard extends StatelessWidget {
+  final List<Recipe> recipes;
+
+  const TravelSnapshotCard({super.key, required this.recipes});
+
+  String _favoriteDestination() {
+    if (recipes.isEmpty) {
+      return 'Start planning to see trends';
+    }
+
+    final counts = <String, int>{};
+    for (final recipe in recipes) {
+      final destination = recipe.itineraryInput.toLocation.trim();
+      if (destination.isEmpty) continue;
+      counts[destination] = (counts[destination] ?? 0) + 1;
+    }
+
+    if (counts.isEmpty) {
+      return 'Start planning to see trends';
+    }
+
+    final entries = counts.entries.toList()
+      ..sort((a, b) {
+        final countCompare = b.value.compareTo(a.value);
+        if (countCompare != 0) return countCompare;
+        return a.key.compareTo(b.key);
+      });
+
+    return entries.first.key;
+  }
+
+  double _averageTripLength() {
+    final dayValues = recipes
+        .map((recipe) => recipe.days)
+        .whereType<int>()
+        .where((days) => days > 0)
+        .toList();
+
+    if (dayValues.isEmpty) {
+      return 0;
+    }
+
+    final totalDays = dayValues.fold<int>(0, (sum, days) => sum + days);
+    return totalDays / dayValues.length;
+  }
+
+  String _latestTripLabel() {
+    if (recipes.isEmpty) {
+      return 'No trips yet';
+    }
+
+    final latestRecipe = recipes.reduce((current, next) {
+      return next.createdAt.isAfter(current.createdAt) ? next : current;
+    });
+
+    return DateFormat('MMM d').format(latestRecipe.createdAt);
+  }
+
+  String _insightText() {
+    if (recipes.isEmpty) {
+      return 'Generate your first itinerary to unlock travel insights.';
+    }
+
+    final favoriteDestination = _favoriteDestination();
+    final averageTripLength = _averageTripLength();
+
+    if (averageTripLength > 0) {
+      return 'Your trips average ${averageTripLength.toStringAsFixed(1)} days, and $favoriteDestination appears most often.';
+    }
+
+    return 'You have ${recipes.length} itineraries ready, with $favoriteDestination showing up most often.';
+  }
+
+  Widget _buildMetricCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.82),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final averageTripLength = _averageTripLength();
+    final tripsLabel = recipes.length == 1 ? '1 trip' : '${recipes.length} trips';
+    final averageLabel = averageTripLength > 0
+        ? '${averageTripLength.toStringAsFixed(1)} days'
+        : 'Add trip length';
+    final favoriteDestination = _favoriteDestination();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.indigo.shade700,
+            Colors.blue.shade500,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.shade200.withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.insights_outlined,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Travel Snapshot',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Live insights from your itinerary history',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _insightText(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              _buildMetricCard(
+                icon: Icons.flight_takeoff_outlined,
+                label: 'Itineraries',
+                value: tripsLabel,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              _buildMetricCard(
+                icon: Icons.schedule_outlined,
+                label: 'Average length',
+                value: averageLabel,
+                color: Colors.amberAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildMetricCard(
+                icon: Icons.place_outlined,
+                label: 'Top destination',
+                value: favoriteDestination,
+                color: Colors.lightGreenAccent,
+              ),
+              const SizedBox(width: 12),
+              _buildMetricCard(
+                icon: Icons.calendar_today_outlined,
+                label: 'Latest trip',
+                value: _latestTripLabel(),
+                color: Colors.lightBlueAccent,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class RecipeCard extends StatelessWidget {
-  final dynamic recipe; // Use dynamic to avoid import issues
+  final Recipe recipe;
   final Future<void> Function()? onDelete;
 
   const RecipeCard({
-    Key? key,
+    super.key,
     required this.recipe,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   Future<void> _confirmDelete(BuildContext context) async {
     final shouldDelete = await showDialog<bool>(
@@ -296,9 +584,7 @@ class RecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = recipe.createdAt != null
-        ? DateFormat('MMM dd, yyyy').format(recipe.createdAt)
-        : 'Unknown date';
+    final dateStr = DateFormat('MMM dd, yyyy').format(recipe.createdAt);
 
     return GestureDetector(
       onTap: () {
@@ -342,7 +628,7 @@ class RecipeCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${recipe.itineraryInput?.fromLocation ?? 'Unknown'} → ${recipe.itineraryInput?.toLocation ?? 'Unknown'}',
+                        '${recipe.itineraryInput.fromLocation} → ${recipe.itineraryInput.toLocation}',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey[600],

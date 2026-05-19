@@ -1,242 +1,152 @@
-# 🎉 Flutter Frontend - Complete Implementation
+# AI Travel Planner
 
-## Overview
+AI Travel Planner is a full-stack trip planning app with a TypeScript/Express backend and a Flutter frontend. Users can sign up with OTP verification, generate AI-powered itineraries, manage preferences, and review saved travel plans from a polished mobile-first dashboard.
 
-A **production-ready Flutter frontend** for the Travel Planner app with full integration to your Node.js/Express backend. The app enables users to sign up with OTP verification, generate AI-powered travel itineraries, and manage their travel preferences.
+## What’s Included
 
-## ✨ What You Get
+- Flutter app with authentication, OTP verification, itinerary generation, itinerary details, and preferences
+- Node.js/Express API with MongoDB, JWT auth, OTP flow, email delivery, and Gemini-powered itinerary generation
+- Provider-based state management on the client side
+- Material 3 UI with responsive layouts and clean error handling
+- Documentation for setup, screen behavior, and architecture
 
-### 📦 Complete Package Includes:
-- ✅ 6 fully functional screens with beautiful UI
-- ✅ Complete state management (Provider pattern)
-- ✅ Full API integration with error handling
-- ✅ User authentication with OTP verification
-- ✅ Persistent session management
-- ✅ Form validation and input handling
-- ✅ Loading states and error messages
-- ✅ Material Design 3 theming
-- ✅ Responsive design for all screen sizes
-- ✅ Complete documentation
+## Unique Feature
 
-### 📱 Screens Implemented
+The dashboard now includes a live Travel Snapshot panel. It turns saved itineraries into quick insights such as total trips, average trip length, top destination, and the latest trip date, so users can see planning patterns at a glance.
 
-1. **Auth Screen** - Login/Signup with email
-2. **OTP Screen** - Email verification with 6-digit code
-3. **Dashboard** - Home page with recent itineraries
-4. **Recipe Generation** - Form to create new itineraries
-5. **Recipe Detail** - View full itinerary with day-by-day breakdown
-6. **Preferences** - User travel preferences and settings
+## Project Structure
 
-## 🚀 Getting Started (30 seconds)
+```text
+TravelPlanner_APP/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── utils/
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── lib/
+│   │   ├── models/
+│   │   ├── providers/
+│   │   ├── screens/
+│   │   └── services/
+│   ├── pubspec.yaml
+│   └── test/
+├── README.md
+├── QUICK_REFERENCE.md
+├── SCREENS_GUIDE.md
+└── FRONTEND_IMPLEMENTATION_SUMMARY.md
+```
+
+## Backend Setup
+
+1. Install dependencies:
 
 ```bash
-# 1. Navigate to frontend
+cd backend
+npm install
+```
+
+2. Create a `.env` file in `backend/` with your local values for MongoDB, JWT, OTP, Gemini, and SMTP.
+
+3. Start the API:
+
+```bash
+npm run dev
+```
+
+The backend scripts are:
+
+- `npm run dev` to run the TypeScript server with auto-reload
+- `npm run build` to compile to `dist/`
+- `npm start` to run the compiled server
+
+## Frontend Setup
+
+```bash
 cd frontend
-
-# 2. Install dependencies
 flutter pub get
-
-# 3. Update backend URL (if needed)
-# Edit: lib/services/api_client.dart line 9
-# Change: static const String baseUrl = 'http://your-backend-url:5000/api';
-
-# 4. Run the app
 flutter run
 ```
 
-## 📁 Project Structure
+If your backend is not running on localhost, update the base API URL in `frontend/lib/services/api_client.dart`.
 
-```
-frontend/
-├── lib/
-│   ├── main.dart                          # App entry point
-│   ├── models/                            # Data models
-│   │   ├── user_model.dart               # User & UserPreferences
-│   │   └── recipe_model.dart             # Recipe & related models
-│   ├── services/                          # API communication
-│   │   └── api_client.dart               # Complete API client
-│   ├── providers/                         # State management
-│   │   ├── auth_provider.dart            # Auth state
-│   │   ├── recipe_provider.dart          # Itinerary state
-│   │   └── user_provider.dart            # User preferences state
-│   └── screens/                           # UI screens
-│       ├── auth_screen.dart              # Login/Signup
-│       ├── otp_screen.dart               # OTP verification
-│       ├── dashboard_screen.dart         # Home page
-│       ├── recipe_generation_screen.dart # Create itinerary
-│       ├── recipe_detail_screen.dart     # View itinerary
-│       └── preferences_screen.dart       # User settings
-├── pubspec.yaml                          # Dependencies
-├── QUICK_REFERENCE.md                    # Quick guide (START HERE)
-├── SETUP_INSTRUCTIONS.md                 # Detailed setup
-├── SCREENS_GUIDE.md                      # Screen documentation
-├── FRONTEND_ARCHITECTURE.md              # Architecture guide
-└── README.md                             # Project overview
-```
+## Main Features
 
-## 🎯 Key Features
+- Email signup and signin with OTP verification
+- Auto-login and persistent session storage
+- AI itinerary generation with day-by-day plan output
+- Itinerary detail view with activities, meals, food ideas, packing checklist, and budget notes
+- User preferences for travel style, pace, budget, food, and destinations
+- Dashboard itinerary list with delete support
+- Travel Snapshot analytics panel for quick itinerary insights
 
-### Authentication ✅
-- Email-based signup with name
-- Email-based signin
-- 6-digit OTP verification
-- Auto-focus navigation in OTP input
-- 5-minute countdown timer
-- Automatic token persistence
-- Auto-login on app restart
-- Secure logout
+## API Overview
 
-### Itineraries ✅
-- AI-powered generation (via backend)
-- Multi-field form with validation
-- Date range selection
-- Budget and traveler count
-- Interest and dietary preferences
-- Day-wise breakdown with expand/collapse
-- Local food recommendations
-- Packing checklist
-- Transport tips
-- Budget estimation
+- `POST /api/auth/signup`
+- `POST /api/auth/signin`
+- `POST /api/auth/verify-otp`
+- `GET /api/users/me`
+- `PUT /api/users/preferences`
+- `GET /api/dashboard`
+- `POST /api/recipes/generate`
+- `GET /api/recipes`
+- `DELETE /api/recipes/:id`
+- `GET /api/health`
 
-### User Preferences ✅
-- Travel style selection
-- Budget preference
-- Trip pace setting
-- Food preferences (multi-select)
-- Dietary restrictions (multi-select)
-- Preferred destinations (multi-select)
-- Persistent storage
+## Notes
 
-### UI/UX ✅
-- Material Design 3 compliance
-- Gradient backgrounds and effects
-- Card-based layouts
-- Smooth animations and transitions
-- Loading indicators
-- Error message handling
-- Form validation with helpful messages
-- Empty states
-- Responsive design
+- Do not commit real `.env` values to version control.
+- The frontend uses Provider for state management and shared preferences for local session persistence.
+- The backend expects MongoDB and Gemini credentials to be configured before itinerary generation will work.
 
-## 🔌 API Integration (Complete)
+## Monitoring
 
-All endpoints from your backend are integrated:
+Add basic observability before shipping the app to production:
 
-```
-✅ POST   /api/auth/signup              - Create account
-✅ POST   /api/auth/signin              - Initiate signin
-✅ POST   /api/auth/verify-otp          - Verify email & get token
-✅ GET    /api/users/me                 - Get user profile
-✅ PUT    /api/users/preferences        - Update preferences
-✅ GET    /api/dashboard                - Get dashboard data
-✅ POST   /api/recipes/generate         - Generate itinerary
-✅ GET    /api/recipes                  - Fetch all itineraries
-✅ GET    /api/health                   - Health check
-```
+- Log every API request with method, route, status code, and latency.
+- Track backend health with the `GET /api/health` endpoint.
+- Capture unhandled errors and auth failures in a central error tracker.
+- Monitor Gemini request counts, response latency, and error rates separately from normal API traffic.
+- Set alerts for repeated failures, long response times, and quota spikes.
 
-## 📊 State Management
+Suggested production stack:
 
-Using **Provider** pattern for clean, scalable state management:
+- Metrics collection with Prometheus
+- Dashboards and alerting with Grafana
+- Centralized log aggregation with Loki
+- Uptime checks against `/api/health`
+- Structured application logs that feed into Loki
 
-### AuthProvider
-- Handles signup/signin/logout
-- Token storage and retrieval
-- Auto-login on app restart
-- User session management
+## Gemini API Key Rate Limiting
 
-### RecipeProvider
-- Manages itineraries list
-- Generates new recipes
-- Handles loading and error states
-- Recipe selection for viewing
+Protect the Gemini API key on the backend, not in the Flutter app. The key should stay in `backend/.env` and never be exposed to the client.
 
-### UserProvider
-- Manages user profile
-- Handles preference updates
-- Syncs with backend
+Recommended controls:
 
-## 🎨 Design System
+- Limit itinerary generation requests per user and per IP address.
+- Apply a shorter cooldown for repeated Gemini calls from the same account.
+- Reject burst traffic with `429 Too Many Requests` before the Gemini request is sent.
+- Cache or reuse recent itinerary responses when the same input is submitted repeatedly.
+- Keep a hard daily quota so a single account cannot consume all Gemini usage.
+- Rotate the Gemini key if abnormal usage or leakage is suspected.
 
-- **Color Scheme**: Blue-based Material Design 3
-- **Typography**: Google Fonts (Inter font)
-- **Spacing**: 8px grid system
-- **Radius**: 12px default, 8px for smaller elements
-- **Shadows**: Soft shadows for depth
-- **Animations**: Smooth transitions and loading indicators
+Operational rule of thumb:
 
-## 📚 Documentation
+- Rate limit at the backend boundary that calls Gemini, not inside the Flutter UI.
+- Treat Gemini calls as a premium operation and keep explicit quotas, logs, and alerts around them.
 
-| Document | Purpose |
-|----------|---------|
-| **QUICK_REFERENCE.md** | 2-minute quick start guide |
-| **SETUP_INSTRUCTIONS.md** | Detailed setup for all platforms |
-| **SCREENS_GUIDE.md** | Complete screen-by-screen guide |
-| **FRONTEND_ARCHITECTURE.md** | Architecture and design patterns |
-| **FRONTEND_IMPLEMENTATION_SUMMARY.md** | What was implemented |
+## Helpful Docs
 
-## 🔧 Configuration
+- [Quick reference](QUICK_REFERENCE.md)
+- [Screen guide](SCREENS_GUIDE.md)
+- [Frontend implementation summary](FRONTEND_IMPLEMENTATION_SUMMARY.md)
 
-### Update Backend URL
-File: `lib/services/api_client.dart` (line 9)
-
-```dart
-// For localhost development
-static const String baseUrl = 'http://localhost:5000/api';
-
-// For Android emulator (uses different localhost)
-static const String baseUrl = 'http://10.0.2.2:5000/api';
-
-// For remote server
-static const String baseUrl = 'https://your-domain.com/api';
-```
-
-## 📦 Dependencies Included
-
-- **provider** - State management
-- **http** - API calls
-- **shared_preferences** - Local storage (tokens)
-- **intl** - Date formatting
-- **email_validator** - Email validation
-- **google_fonts** - Typography
-- **json_serializable** - JSON handling
-- **lottie** - Animations (ready to use)
-- **flutter_dotenv** - Environment config
-
-## 🧪 Testing the App
-
-### 1. Test Signup Flow
-```
-1. App launches → See Auth Screen
-2. Tap "Sign Up"
-3. Enter name + email
-4. Tap "Sign Up" button
-5. Get OTP from backend console (dev mode)
-6. Enter 6 digits
-7. See Dashboard ✓
-```
-
-### 2. Test Trip Generation
-```
-1. From Dashboard: Tap "Generate New Itinerary"
-2. Enter:
-   - From: "New York"
-   - To: "Paris"
-   - Days: 5
-   - Budget: "Moderate"
-3. Tap "Generate Itinerary"
-4. Wait for AI (30-120 seconds)
-5. See detailed itinerary ✓
-```
-
-### 3. Test Preferences
-```
-1. From Dashboard: Click menu → Preferences
-2. Select travel style, budget, dietary restrictions
-3. Tap "Save Preferences"
-4. See success message ✓
-```
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
